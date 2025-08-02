@@ -1,3 +1,5 @@
+// schema.prisma
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -7,7 +9,98 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Ping {
-  id    Int     @id @default(autoincrement())
-  text  String
+enum VisitStatus {
+  IN_PROGRESS
+  READY_TO_BILL
+}
+
+model Patient {
+  id     String  @id @default(uuid())
+  name   String
+  visits Visit[]
+}
+
+model Visit {
+  id         String      @id @default(uuid())
+  patientId  String
+  patient    Patient     @relation(fields: [patientId], references: [id])
+  status     VisitStatus @default(IN_PROGRESS)
+
+  soapNote   SoapNote?   @relation("VisitToSoapNote")
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+}
+
+model SoapNote {
+  id         String             @id @default(uuid())
+  visitId    String             @unique
+  visit      Visit              @relation("VisitToSoapNote", fields: [visitId], references: [id])
+  content    String
+  revisions  SoapNoteRevision[]
+}
+
+model SoapNoteRevision {
+  id             String             @id @default(uuid())
+  soapNoteId     String
+  soapNote       SoapNote           @relation(fields: [soapNoteId], references: [id])
+  content        String
+  embedding      Unsupported("vector(768)")             // Will change to Vector once pgvector is set up
+  createdAt      DateTime           @default(now())
+
+  suggestions    SuggestedCode[]
+  decisionSet    CodeDecisionSet?   @relation("RevisionToDecisionSet")
+}
+
+model SuggestedCode {
+  id            String            @id @default(uuid())
+  revisionId    String
+  revision      SoapNoteRevision @relation(fields: [revisionId], references: [id])
+
+  code          String
+  codeType      String            // e.g., ICD, CPT, HCPCS
+  confidence    Float
+  createdAt     DateTime          @default(now())
+}
+
+model CodeDecisionSet {
+  id              String              @id @default(uuid())
+  revisionId      String              @unique
+  revision        SoapNoteRevision   @relation("RevisionToDecisionSet", fields: [revisionId], references: [id])
+
+  finalizedCodes  FinalizedCode[]
+  rejectedCodes   RejectedCode[]
+  manualCodes     ManualCode[]
+}
+
+model FinalizedCode {
+  id          String          @id @default(uuid())
+  decisionSet CodeDecisionSet @relation(fields: [decisionSetId], references: [id])
+  decisionSetId String
+
+  code        String
+  codeType    String
+  source      String         // "SUGGESTED" or "MANUAL"
+  createdAt   DateTime       @default(now())
+}
+
+model RejectedCode {
+  id            String          @id @default(uuid())
+  decisionSetId String
+  decisionSet   CodeDecisionSet @relation(fields: [decisionSetId], references: [id])
+
+  code          String
+  codeType      String
+  reason        String
+  createdAt     DateTime        @default(now())
+}
+
+model ManualCode {
+  id            String          @id @default(uuid())
+  decisionSetId String
+  decisionSet   CodeDecisionSet @relation(fields: [decisionSetId], references: [id])
+
+  code          String
+  codeType      String
+  addedBy       String
+  createdAt     DateTime        @default(now())
 }
