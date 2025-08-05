@@ -89,6 +89,7 @@ declare module 'styled-components' {
         border: string;
         backdrop: string;
       };
+      gold: { 400: string; 500: string; 600: string };
     };
   }
 }

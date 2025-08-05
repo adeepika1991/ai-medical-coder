@@ -247,6 +247,11 @@ export const lightTheme = {
       border: 'rgba(255, 255, 255, 0.18)',
       backdrop: 'blur(16px)',
     },
+    gold: {
+      400: '#FFD700',
+      500: '#FFC107',
+      600: '#FFA000',
+    },
   },
 };
 
@@ -351,6 +356,11 @@ export const darkTheme = {
       background: 'rgba(15, 23, 42, 0.25)',
       border: 'rgba(148, 163, 184, 0.18)',
       backdrop: 'blur(16px)',
+    },
+    gold: {
+      400: '#FFECB3',
+      500: '#FFD700',
+      600: '#FFC107',
     },
   },
 };
