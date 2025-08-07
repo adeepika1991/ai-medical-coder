@@ -1,7 +1,6 @@
 'use client';
 
 import React from 'react';
-
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
 import { Card } from './Card';
@@ -12,7 +11,9 @@ import { CheckCircle, XCircle } from 'lucide-react';
 const PreviewContainer = styled(Card)`
   position: relative;
   overflow: hidden;
+  isolation: isolate;
 
+  /* Gradient background */
   &::before {
     content: '';
     position: absolute;
@@ -26,7 +27,76 @@ const PreviewContainer = styled(Card)`
       ${({ theme }) => theme.colors.secondary[500]}10 100%
     );
     border-radius: ${tokens.radii['2xl']};
+    z-index: -2;
+  }
+
+  /* Animated border effect */
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: ${tokens.radii['2xl']};
+    padding: ${tokens.borderWidth.thick};
+    background: linear-gradient(
+      45deg,
+      ${({ theme }) => theme.colors.primary[500]},
+      ${({ theme }) => theme.colors.secondary[500]},
+      ${({ theme }) => theme.colors.primary[500]}
+    );
+    -webkit-mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
     z-index: -1;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  &:hover::after {
+    opacity: 0.5;
+    animation: shimmer 3s linear infinite;
+  }
+
+  /* Shine effect */
+  .shine {
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 50%;
+    height: 100%;
+    background: linear-gradient(
+      to right,
+      rgba(255, 255, 255, 0) 0%,
+      rgba(255, 255, 255, 0.1) 50%,
+      rgba(255, 255, 255, 0) 100%
+    );
+    transform: skewX(-20deg);
+    z-index: -1;
+    opacity: 0;
+  }
+
+  &:hover .shine {
+    animation: shine 1.5s ease-out infinite;
+    opacity: 1;
+  }
+
+  @keyframes shimmer {
+    0% {
+      background-position: 0% 50%;
+    }
+    100% {
+      background-position: 200% 50%;
+    }
+  }
+
+  @keyframes shine {
+    0% {
+      left: -100%;
+    }
+    100% {
+      left: 150%;
+    }
   }
 `;
 
@@ -67,6 +137,28 @@ const CodeCard = styled(motion.div)`
   border: ${tokens.borderWidth.thin} solid ${({ theme }) => theme.colors.border}40;
   border-radius: ${tokens.radii.lg};
   padding: ${tokens.spacing.md};
+  position: relative;
+  overflow: hidden;
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    background: linear-gradient(
+      to bottom,
+      ${({ theme }) => theme.colors.primary[500]},
+      ${({ theme }) => theme.colors.secondary[500]}
+    );
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  &:hover::after {
+    opacity: 1;
+  }
 `;
 
 const CodeInfo = styled.div`
@@ -138,7 +230,10 @@ const mockCodes = [
 
 export const GlassmorphicPreviewCard: React.FC = () => {
   return (
-    <PreviewContainer variant="glass" padding="lg">
+    <PreviewContainer variant="glass" padding="lg" enableHover={true}>
+      {/* Shine effect element */}
+      <div className="shine" />
+
       <PreviewHeader>
         <PreviewTitle>AI Medical Coding Preview</PreviewTitle>
       </PreviewHeader>
@@ -157,6 +252,10 @@ export const GlassmorphicPreviewCard: React.FC = () => {
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: index * 0.1 }}
+            whileHover={{
+              y: -2,
+              boxShadow: tokens.elevation.md,
+            }}
           >
             <CodeInfo>
               <CodeLabel>
