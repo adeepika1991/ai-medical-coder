@@ -232,8 +232,8 @@ export const lightTheme = {
     },
 
     // Semantic Colors
-    background: '#ffffff',
-    surface: '#f9fafb',
+    background: '#f8fafc',
+    surface: '#ffffff',
     surfaceHover: '#f3f4f6',
     border: '#e5e7eb',
     borderHover: '#d1d5db',
@@ -244,7 +244,7 @@ export const lightTheme = {
     // Glass/Glassmorphic
     glass: {
       background: 'rgba(255, 255, 255, 0.25)',
-      border: 'rgba(255, 255, 255, 0.18)',
+      border: 'rgba(200, 200, 220, 0.3)', // ← soft light gray-blue, 30% opacity
       backdrop: 'blur(16px)',
     },
     gold: {
