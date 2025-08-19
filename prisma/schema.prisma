@@ -14,10 +14,35 @@ enum VisitStatus {
   READY_TO_BILL
 }
 
+enum VisitType {
+  OFFICE_VISIT
+  CONSULTATION
+  FOLLOW_UP
+  ANNUAL_EXAM
+  URGENT_CARE
+  TELEMEDICINE
+  PROCEDURE
+  SURGERY
+  OTHER
+}
+
+enum Specialty {
+  CARDIOLOGY
+  DERMATOLOGY
+  ORTHOPEDICS
+  PEDIATRICS
+  PSYCHIATRY
+  FAMILY_MEDICINE
+  INTERNAL_MEDICINE
+  OTHER
+}
+
 model Patient {
-  id     String  @id @default(uuid())
-  name   String
-  visits Visit[]
+  id        String   @id @default(uuid())
+  name      String
+  dob       DateTime
+  insurance String?
+  visits    Visit[]
 }
 
 model Visit {
@@ -25,6 +50,11 @@ model Visit {
   patientId  String
   patient    Patient     @relation(fields: [patientId], references: [id])
   status     VisitStatus @default(IN_PROGRESS)
+
+  type       VisitType
+  date       DateTime
+  time       String?
+  specialty  Specialty
 
   soapNote   SoapNote?   @relation("VisitToSoapNote")
   createdAt  DateTime    @default(now())
@@ -44,7 +74,7 @@ model SoapNoteRevision {
   soapNoteId     String
   soapNote       SoapNote           @relation(fields: [soapNoteId], references: [id])
   content        String
-  embedding      Unsupported("vector(768)")             // Will change to Vector once pgvector is set up
+  embedding      Unsupported("vector(768)")
   createdAt      DateTime           @default(now())
 
   suggestions    SuggestedCode[]
@@ -57,7 +87,7 @@ model SuggestedCode {
   revision      SoapNoteRevision @relation(fields: [revisionId], references: [id])
 
   code          String
-  codeType      String            // e.g., ICD, CPT, HCPCS
+  codeType      String
   confidence    Float
   createdAt     DateTime          @default(now())
 }
@@ -79,7 +109,7 @@ model FinalizedCode {
 
   code        String
   codeType    String
-  source      String         // "SUGGESTED" or "MANUAL"
+  source      String
   createdAt   DateTime       @default(now())
 }
 

@@ -1,10 +1,18 @@
 -- CreateEnum
 CREATE TYPE "public"."VisitStatus" AS ENUM ('IN_PROGRESS', 'READY_TO_BILL');
 
+-- CreateEnum
+CREATE TYPE "public"."VisitType" AS ENUM ('OFFICE_VISIT', 'CONSULTATION', 'FOLLOW_UP', 'ANNUAL_EXAM', 'URGENT_CARE', 'TELEMEDICINE', 'PROCEDURE', 'SURGERY', 'OTHER');
+
+-- CreateEnum
+CREATE TYPE "public"."Specialty" AS ENUM ('CARDIOLOGY', 'DERMATOLOGY', 'ORTHOPEDICS', 'PEDIATRICS', 'PSYCHIATRY', 'FAMILY_MEDICINE', 'INTERNAL_MEDICINE', 'OTHER');
+
 -- CreateTable
 CREATE TABLE "public"."Patient" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
+    "dob" TIMESTAMP(3) NOT NULL,
+    "insurance" TEXT,
 
     CONSTRAINT "Patient_pkey" PRIMARY KEY ("id")
 );
@@ -14,6 +22,10 @@ CREATE TABLE "public"."Visit" (
     "id" TEXT NOT NULL,
     "patientId" TEXT NOT NULL,
     "status" "public"."VisitStatus" NOT NULL DEFAULT 'IN_PROGRESS',
+    "type" "public"."VisitType" NOT NULL,
+    "date" TIMESTAMP(3) NOT NULL,
+    "time" TEXT,
+    "specialty" "public"."Specialty" NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 

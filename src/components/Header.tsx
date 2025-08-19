@@ -8,6 +8,8 @@ import { Container } from './Container';
 import { useTheme } from '@/providers/ThemeProvider';
 import { tokens } from '@/design-system/tokens';
 import { Moon, Sun, Stethoscope } from 'lucide-react';
+import WorkFlow from '@/features/workflow/WorkFlow';
+import { usePathname } from 'next/navigation';
 
 const HeaderWrapper = styled.header`
   position: sticky;
@@ -23,6 +25,12 @@ const HeaderContent = styled.div`
   align-items: center;
   justify-content: space-between;
   height: 64px;
+`;
+
+const HeaderMenu = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 `;
 
 const Logo = styled(Link)`
@@ -55,6 +63,8 @@ const ThemeToggle = styled(motion.button)`
 
 export const Header: React.FC = () => {
   const { theme, toggleTheme } = useTheme();
+  const pathname = usePathname();
+  const nonLandingPage = pathname !== '/';
 
   return (
     <HeaderWrapper>
@@ -64,14 +74,16 @@ export const Header: React.FC = () => {
             <Stethoscope size={24} />
             MedCode AI
           </Logo>
-
-          <ThemeToggle
-            onClick={toggleTheme}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
-          </ThemeToggle>
+          <HeaderMenu>
+            {nonLandingPage ? <WorkFlow /> : null}
+            <ThemeToggle
+              onClick={toggleTheme}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
+            </ThemeToggle>
+          </HeaderMenu>
         </HeaderContent>
       </Container>
     </HeaderWrapper>
