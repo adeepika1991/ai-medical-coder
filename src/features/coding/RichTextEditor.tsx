@@ -26,6 +26,9 @@ const EditorContainer = styled.div`
   overflow: hidden;
   background-color: ${({ theme }) => theme.colors.surface};
   box-shadow: ${tokens.elevation.sm};
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
 `;
 
 // Editor Body (contentEditable)

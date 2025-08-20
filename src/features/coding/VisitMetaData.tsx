@@ -187,10 +187,6 @@ const VisitMetadata: React.FC<VisitMetadataProps> = ({
 
         <FieldGrid>
           <ReadOnlyField>
-            <FieldLabel>Patient ID</FieldLabel>
-            <FieldValue>{metadata.patientId || '—'}</FieldValue>
-          </ReadOnlyField>
-          <ReadOnlyField>
             <FieldLabel>Patient Name</FieldLabel>
             <FieldValue>{metadata.patientName || '—'}</FieldValue>
           </ReadOnlyField>

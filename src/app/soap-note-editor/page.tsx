@@ -10,6 +10,8 @@ import EditorStats from '@/features/coding/EditorStats';
 import GenerateCodesSection from '@/features/coding/GenerateCodesSection';
 import { useRouter } from 'next/navigation';
 import VisitMetadata from '@/features/coding/VisitMetaData';
+import { useQuery } from '@tanstack/react-query';
+import { fetchPatient } from '@/lib/apiUtils';
 
 // ==============================
 // Styled Components
@@ -59,10 +61,13 @@ const ErrorIconWrapper = styled.div`
 const LayoutGrid = styled.div`
   display: grid;
   grid-template-columns: 1fr;
-  gap: ${tokens.spacing['2xl']};
+  gap: ${tokens.spacing.lg};
+  width: 100%;
+  overflow-x: hidden;
 
   @media (min-width: ${tokens.breakpoints.lg}) {
-    grid-template-columns: 2fr 1fr;
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+    gap: ${tokens.spacing['2xl']};
   }
 `;
 
@@ -126,8 +131,11 @@ const Section = styled.div`
 
 // Right Panel - Metadata
 const RightPanel = styled.div`
+  width: 100%;
+  overflow-x: hidden;
+
   @media (max-width: ${tokens.breakpoints.lg}) {
-    margin-top: ${tokens.spacing['2xl']};
+    margin-top: ${tokens.spacing.xl};
   }
 `;
 
@@ -138,6 +146,9 @@ const MetadataCard = styled.div`
   border-radius: ${tokens.radii.lg};
   padding: ${tokens.spacing.lg};
   box-shadow: ${tokens.elevation.sm};
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
 
   &.glass-light {
     background-color: ${({ theme }) => theme.colors.glass.background};
@@ -172,6 +183,12 @@ interface Metadata {
 // ==============================
 const SOAPNoteEditor = () => {
   const router = useRouter();
+  const { data, isLoading, error } = useQuery({
+    queryKey: ['patient'],
+    queryFn: fetchPatient,
+  });
+
+  console.log(data);
   const [errors, setErrors] = useState<Record<string, string>>({
     content: '',
     general: '',
@@ -301,7 +318,7 @@ const SOAPNoteEditor = () => {
       };
 
       localStorage.setItem('soap-note-current', JSON.stringify(saveData));
-      router.push('/code-review-interface');
+      router.push('/code-review');
     } catch (error) {
       console.error('Error generating codes:', error);
       setErrors({ general: 'Failed to generate codes. Please try again.' });
