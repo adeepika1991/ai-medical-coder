@@ -4,7 +4,7 @@ import React from 'react';
 import { Container } from '@/components/Container';
 import styled from 'styled-components';
 import { tokens } from '@/design-system/tokens';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import RichTextEditor from '@/features/coding/RichTextEditor';
 import EditorStats from '@/features/coding/EditorStats';
 import GenerateCodesSection from '@/features/coding/GenerateCodesSection';
@@ -12,10 +12,7 @@ import { useRouter } from 'next/navigation';
 import VisitMetadata from '@/features/coding/VisitMetaData';
 import { useQuery } from '@tanstack/react-query';
 import { fetchPatient } from '@/lib/apiUtils';
-
-// ==============================
-// Styled Components
-// ==============================
+import { useWorkFlowStore } from '@/features/workflow/store';
 
 const Title = styled.h2`
   font-size: ${tokens.fontSize['4xl']};
@@ -158,54 +155,33 @@ const MetadataCard = styled.div`
   }
 `;
 
-// ==============================
-// Metadata Interface
-// ==============================
 interface Metadata {
-  [key: string]: unknown;
-
-  patientId?: string;
-  patientName?: string;
-  dateOfBirth?: string;
-  insuranceId?: string;
   visitDate?: string;
   visitTime?: string;
   visitType?: string;
-  providerName?: string;
-  providerNPI?: string;
   specialty?: string;
-  chiefComplaint?: string;
-  facility?: string;
 }
 
-// ==============================
-// Main Component
-// ==============================
 const SOAPNoteEditor = () => {
   const router = useRouter();
-  const { data, isLoading, error } = useQuery({
+  const {
+    data: patientData,
+    isLoading: isPatientDetailsLoading,
+    error,
+  } = useQuery({
     queryKey: ['patient'],
     queryFn: fetchPatient,
   });
-
-  console.log(data);
+  const { markStepCompleted, transitionToStep } = useWorkFlowStore();
   const [errors, setErrors] = useState<Record<string, string>>({
     content: '',
     general: '',
   });
   const [metadata, setMetadata] = useState<Metadata>({
-    patientId: '',
-    patientName: '',
-    dateOfBirth: '',
-    insuranceId: '',
     visitDate: new Date().toISOString().split('T')[0], // ✅ Removed optional chaining
     visitTime: '',
     visitType: '',
-    providerName: '',
-    providerNPI: '',
     specialty: '',
-    chiefComplaint: '',
-    facility: '',
   });
   const [content, setContent] = useState<string>('');
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
@@ -213,47 +189,48 @@ const SOAPNoteEditor = () => {
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
 
   // Auto-save functionality
-  useEffect(() => {
-    const autoSaveTimer = setTimeout(() => {
-      if (content || Object.values(metadata)?.some((value) => value)) {
-        handleAutoSave();
-      }
-    }, 2000);
+  // useEffect(() => {
+  //   const autoSaveTimer = setTimeout(() => {
+  //     if (content) {
+  //       handleAutoSave();
+  //     }
+  //   }, 2000);
 
-    return () => clearTimeout(autoSaveTimer);
-  }, [content, metadata]);
+  //   return () => clearTimeout(autoSaveTimer);
+  //   // eslint-disable-next-line react-hooks/exhaustive-deps
+  // }, [content]);
 
   // Load saved data on component mount
-  useEffect(() => {
-    const savedData = localStorage.getItem('soap-note-draft');
-    if (savedData) {
-      try {
-        const parsed = JSON.parse(savedData);
-        setContent(parsed?.content || '');
-        setMetadata(parsed?.metadata || metadata);
-        setLastSaved(new Date(parsed.lastSaved));
-      } catch (error) {
-        console.error('Error loading saved data:', error);
-      }
-    }
-  }, []);
+  // useEffect(() => {
+  //   const savedData = localStorage.getItem('soap-note-draft');
+  //   if (savedData) {
+  //     try {
+  //       const parsed = JSON.parse(savedData);
+  //       setContent(parsed?.content || '');
+  //       setMetadata(parsed?.metadata || metadata);
+  //       setLastSaved(new Date(parsed.lastSaved));
+  //     } catch (error) {
+  //       console.error('Error loading saved data:', error);
+  //     }
+  //   }
+  // }, []);
 
-  const handleAutoSave = async () => {
-    setIsSaving(true);
+  // const handleAutoSave = async () => {
+  //   setIsSaving(true);
 
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 500));
+  //   // Simulate API call
+  //   await new Promise((resolve) => setTimeout(resolve, 500));
 
-    const saveData = {
-      content,
-      metadata,
-      lastSaved: new Date()?.toISOString(),
-    };
+  //   const saveData = {
+  //     content,
+  //     metadata,
+  //     lastSaved: new Date()?.toISOString(),
+  //   };
 
-    localStorage.setItem('soap-note-draft', JSON.stringify(saveData));
-    setLastSaved(new Date());
-    setIsSaving(false);
-  };
+  //   localStorage.setItem('soap-note-draft', JSON.stringify(saveData));
+  //   setLastSaved(new Date());
+  //   setIsSaving(false);
+  // };
 
   const handleContentChange = (newContent: string) => {
     setContent(newContent);
@@ -267,6 +244,10 @@ const SOAPNoteEditor = () => {
 
     if (!metadata.visitType) {
       newErrors.visitType = 'Visit type is required';
+    }
+
+    if (!metadata.specialty) {
+      newErrors.specialty = 'Specialty is required';
     }
 
     if (!content.trim()) {
@@ -317,7 +298,10 @@ const SOAPNoteEditor = () => {
         generatedAt: new Date().toISOString(),
       };
 
-      localStorage.setItem('soap-note-current', JSON.stringify(saveData));
+      console.log(saveData);
+      markStepCompleted('step1');
+      transitionToStep('step2');
+      // localStorage.setItem('soap-note-current', JSON.stringify(saveData));
       router.push('/code-review');
     } catch (error) {
       console.error('Error generating codes:', error);
@@ -329,11 +313,15 @@ const SOAPNoteEditor = () => {
 
   const canGenerate = Boolean(
     content.trim().length > 0 &&
-      metadata.patientId &&
+      // metadata.patientId &&
       metadata.visitType &&
-      metadata.providerName &&
+      // metadata.providerName &&
       !isGenerating
   );
+
+  if (isPatientDetailsLoading) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <Container>
@@ -395,6 +383,7 @@ const SOAPNoteEditor = () => {
           <RightPanel>
             <MetadataCard className="glass-light">
               <VisitMetadata
+                patientData={patientData}
                 metadata={metadata}
                 onChange={handleMetadataChange}
                 errors={errors}

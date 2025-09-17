@@ -55,6 +55,9 @@ model Visit {
   date       DateTime
   time       String?
   specialty  Specialty
+  doctorId    String?
+  doctorName  String?
+  submittedBy String?
 
   soapNote   SoapNote?   @relation("VisitToSoapNote")
   createdAt  DateTime    @default(now())

@@ -6,26 +6,20 @@ import { tokens } from '@/design-system/tokens';
 import AppIcon from '@/components/AppIcon';
 import Select from '@/components/Select';
 import { useTheme } from 'styled-components';
+import { PatientSummary } from '@/types/types';
 
 // ==============================
 // Props Interface
 // ==============================
 interface Metadata {
-  patientId?: string;
-  patientName?: string;
-  dateOfBirth?: string;
-  insuranceId?: string;
   visitDate?: string;
   visitTime?: string;
   visitType?: string;
-  providerName?: string;
-  providerNPI?: string;
   specialty?: string;
-  chiefComplaint?: string;
-  facility?: string;
 }
 
 interface VisitMetadataProps {
+  patientData?: PatientSummary;
   metadata: Metadata;
   onChange: (meta: Partial<Metadata>) => void;
   errors?: Record<string, string>;
@@ -128,6 +122,7 @@ const FieldValue = styled.div`
 // Component
 // ==============================
 const VisitMetadata: React.FC<VisitMetadataProps> = ({
+  patientData,
   metadata = {},
   onChange,
   errors = {},
@@ -158,7 +153,7 @@ const VisitMetadata: React.FC<VisitMetadataProps> = ({
 
   const handleChange = (field: keyof Metadata, value: string) => {
     onChange({
-      ...metadata,
+      //...metadata,
       [field]: value,
     });
   };
@@ -188,18 +183,20 @@ const VisitMetadata: React.FC<VisitMetadataProps> = ({
         <FieldGrid>
           <ReadOnlyField>
             <FieldLabel>Patient Name</FieldLabel>
-            <FieldValue>{metadata.patientName || '—'}</FieldValue>
+            <FieldValue>{patientData?.name || '—'}</FieldValue>
           </ReadOnlyField>
         </FieldGrid>
 
         <FieldGrid>
           <ReadOnlyField>
             <FieldLabel>Date of Birth</FieldLabel>
-            <FieldValue>{metadata.dateOfBirth || '—'}</FieldValue>
+            <FieldValue>
+              {patientData?.dob ? new Date(patientData.dob).toLocaleDateString() : '—'}
+            </FieldValue>
           </ReadOnlyField>
           <ReadOnlyField>
             <FieldLabel>Insurance ID</FieldLabel>
-            <FieldValue>{metadata.insuranceId || '—'}</FieldValue>
+            <FieldValue>{patientData?.insurance || '—'}</FieldValue>
           </ReadOnlyField>
         </FieldGrid>
       </Section>
@@ -253,7 +250,7 @@ const VisitMetadata: React.FC<VisitMetadataProps> = ({
                 padding: tokens.spacing.md,
                 width: '100%',
                 fontSize: tokens.fontSize.base,
-                border: `1px solid ${errors.visitTime ? '#ef4444' : 'currentColor'}`,
+                border: `1px solid ${theme.colors.border}`,
                 borderRadius: tokens.radii.md,
                 color: 'inherit',
                 backgroundColor: 'transparent',
@@ -291,6 +288,7 @@ const VisitMetadata: React.FC<VisitMetadataProps> = ({
           onChange={(value) => handleChange('specialty', value)}
           error={errors.specialty}
           disabled={isReadOnly}
+          required
         />
       </Section>
     </MetadataContainer>

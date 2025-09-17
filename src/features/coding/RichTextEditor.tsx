@@ -4,6 +4,7 @@ import React, { useRef, useEffect, useState } from 'react';
 import styled from 'styled-components';
 import { tokens } from '@/design-system/tokens';
 import EditorToolbar from './EditorToolBar';
+import DOMPurify from 'dompurify';
 
 // ==============================
 // Props Interface
@@ -18,8 +19,6 @@ interface RichTextEditorProps {
 // ==============================
 // Styled Components
 // ==============================
-
-// Main Editor Container
 const EditorContainer = styled.div`
   border: 1px solid ${({ theme }) => theme.colors.border};
   border-radius: ${tokens.radii.lg};
@@ -31,11 +30,9 @@ const EditorContainer = styled.div`
   overflow-x: auto;
 `;
 
-// Editor Body (contentEditable)
 const EditorBody = styled.div<{ $minHeight: string }>`
   position: relative;
   padding: ${tokens.spacing.lg};
-  min-height: 400px; /* Fallback */
   min-height: ${({ $minHeight }) => $minHeight};
   font-size: ${tokens.fontSize.base};
   line-height: ${tokens.lineHeight.relaxed};
@@ -47,7 +44,6 @@ const EditorBody = styled.div<{ $minHeight: string }>`
     outline: none;
   }
 
-  /* Placeholder */
   &:empty::before {
     content: attr(data-placeholder);
     display: block;
@@ -59,7 +55,6 @@ const EditorBody = styled.div<{ $minHeight: string }>`
     user-select: none;
   }
 
-  /* Styling for content */
   p,
   div,
   br {
@@ -68,6 +63,15 @@ const EditorBody = styled.div<{ $minHeight: string }>`
 
   strong {
     font-weight: ${tokens.fontWeight.semibold};
+  }
+  em {
+    font-style: italic;
+  }
+  u {
+    text-decoration: underline;
+  }
+  s {
+    text-decoration: line-through;
   }
 `;
 
@@ -85,86 +89,76 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
   const [history, setHistory] = useState<string[]>([]);
   const [historyIndex, setHistoryIndex] = useState<number>(-1);
 
-  // Sync editor content with external `content` prop
+  // Load external content into editor
   useEffect(() => {
     if (editorRef.current && content !== editorRef.current.innerHTML) {
-      editorRef.current.innerHTML = content;
+      editorRef.current.innerHTML = DOMPurify.sanitize(content);
     }
   }, [content]);
 
-  // Save current content to history
-  const saveToHistory = (newContent: string) => {
+  // Save to history
+  const saveToHistory = (html: string) => {
     const newHistory = history.slice(0, historyIndex + 1);
-    newHistory.push(newContent);
+    newHistory.push(html);
     setHistory(newHistory);
     setHistoryIndex(newHistory.length - 1);
   };
 
-  // Handle input changes
+  // Sync on input
   const handleInput = () => {
     if (editorRef.current) {
-      const newContent = editorRef.current.innerHTML;
-      onChange(newContent);
-      saveToHistory(newContent);
+      const clean = DOMPurify.sanitize(editorRef.current.innerHTML);
+      onChange(clean);
+      saveToHistory(clean);
       updateActiveFormats();
     }
   };
 
-  // Handle keyboard shortcuts
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
-    if (e.ctrlKey || e.metaKey) {
-      e.preventDefault();
-      switch (e.key) {
-        case 'z':
-          handleUndo();
-          break;
-        case 'y':
-          handleRedo();
-          break;
-        case 'b':
-          handleFormat('bold');
-          break;
-        case 'i':
-          handleFormat('italic');
-          break;
-        case 'u':
-          handleFormat('underline');
-          break;
-      }
-    }
-  };
+  // 🔑 Apply inline format (bold, italic, underline, etc.)
+  const applyFormat = (tag: keyof HTMLElementTagNameMap) => {
+    const selection = window.getSelection();
+    if (!selection || selection.rangeCount === 0) return;
 
-  // Update active formatting (bold, italic, etc.)
-  const updateActiveFormats = () => {
-    const formats: string[] = [];
-    if (document.queryCommandState('bold')) formats.push('bold');
-    if (document.queryCommandState('italic')) formats.push('italic');
-    if (document.queryCommandState('underline')) formats.push('underline');
-    if (document.queryCommandState('strikethrough')) formats.push('strikethrough');
-    if (document.queryCommandState('insertUnorderedList')) formats.push('insertUnorderedList');
-    if (document.queryCommandState('insertOrderedList')) formats.push('insertOrderedList');
-    if (document.queryCommandState('justifyLeft')) formats.push('justifyLeft');
-    if (document.queryCommandState('justifyCenter')) formats.push('justifyCenter');
-    if (document.queryCommandState('justifyRight')) formats.push('justifyRight');
-    setActiveFormats(formats);
-  };
+    const range = selection.getRangeAt(0);
+    if (range.collapsed) return; // nothing selected
 
-  // Apply formatting command
-  const handleFormat = (command: string) => {
-    if (command === 'insertTemplate') {
-      insertTemplate();
-      return;
-    }
+    const selectedContent = range.extractContents();
+    const wrapper = document.createElement(tag);
+    wrapper.appendChild(selectedContent);
 
-    document.execCommand(command, false, undefined);
-    if (editorRef.current) editorRef.current.focus();
-    updateActiveFormats();
+    range.insertNode(wrapper);
+
+    // move cursor after wrapper
+    range.setStartAfter(wrapper);
+    range.setEndAfter(wrapper);
+    selection.removeAllRanges();
+    selection.addRange(range);
+
     handleInput();
   };
 
-  // Insert SOAP Template
+  // Formatting handler (from toolbar/shortcuts)
+  const handleFormat = (command: string) => {
+    switch (command) {
+      case 'bold':
+        return applyFormat('strong');
+      case 'italic':
+        return applyFormat('em');
+      case 'underline':
+        return applyFormat('u');
+      case 'strikethrough':
+        return applyFormat('s');
+      case 'insertTemplate':
+        return insertTemplate();
+      default:
+        return;
+    }
+  };
+
+  // Insert SOAP template
   const insertTemplate = () => {
-    const template = `<div><strong>SUBJECTIVE:</strong><br/>
+    const template = `<div>
+<strong>SUBJECTIVE:</strong><br/>
 Chief Complaint: <br/>
 History of Present Illness: <br/>
 Review of Systems: <br/><br/>
@@ -184,51 +178,80 @@ Medications: <br/>
 Follow-up: <br/></div>`;
 
     if (editorRef.current) {
-      editorRef.current.innerHTML = template;
-      onChange(template);
-      saveToHistory(template);
+      const clean = DOMPurify.sanitize(template);
+      editorRef.current.innerHTML = clean;
+      onChange(clean);
+      saveToHistory(clean);
       editorRef.current.focus();
       updateActiveFormats();
     }
   };
 
-  // Undo
+  // Undo/redo
   const handleUndo = () => {
     if (historyIndex > 0) {
       const newIndex = historyIndex - 1;
-      const content = history[newIndex];
+      const html = history[newIndex];
       setHistoryIndex(newIndex);
       if (editorRef.current) {
-        editorRef.current.innerHTML = content;
-        onChange(content);
+        editorRef.current.innerHTML = html;
+        onChange(html);
       }
     }
   };
-
-  // Redo
   const handleRedo = () => {
     if (historyIndex < history.length - 1) {
       const newIndex = historyIndex + 1;
-      const content = history[newIndex];
+      const html = history[newIndex];
       setHistoryIndex(newIndex);
       if (editorRef.current) {
-        editorRef.current.innerHTML = content;
-        onChange(content);
+        editorRef.current.innerHTML = html;
+        onChange(html);
       }
     }
   };
 
-  // Handle paste (plaintext only)
+  // Secure plain text paste
   const handlePaste = (e: React.ClipboardEvent<HTMLDivElement>) => {
     e.preventDefault();
     const text = e.clipboardData.getData('text/plain');
-    document.execCommand('insertText', false, text);
+    const selection = window.getSelection();
+    if (!selection || selection.rangeCount === 0) return;
+
+    const range = selection.getRangeAt(0);
+    range.deleteContents();
+    range.insertNode(document.createTextNode(text));
+
+    range.collapse(false);
+    selection.removeAllRanges();
+    selection.addRange(range);
+
     handleInput();
+  };
+
+  // Update active formatting (lightweight — can be improved)
+  const updateActiveFormats = () => {
+    const sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0) return;
+
+    const anchorNode = sel.anchorNode;
+    if (!anchorNode) return;
+
+    let node: Node | null = anchorNode.nodeType === 3 ? anchorNode.parentNode : anchorNode;
+    const formats: string[] = [];
+
+    while (node && node !== editorRef.current) {
+      if (node.nodeName === 'STRONG') formats.push('bold');
+      if (node.nodeName === 'EM') formats.push('italic');
+      if (node.nodeName === 'U') formats.push('underline');
+      if (node.nodeName === 'S') formats.push('strikethrough');
+      node = node.parentNode;
+    }
+    setActiveFormats(formats);
   };
 
   return (
     <EditorContainer>
-      {/* Toolbar */}
       <EditorToolbar
         onFormat={handleFormat}
         activeFormats={activeFormats}
@@ -237,14 +260,11 @@ Follow-up: <br/></div>`;
         canUndo={historyIndex > 0}
         canRedo={historyIndex < history.length - 1}
       />
-
-      {/* Editor Body */}
       <div className="relative">
         <EditorBody
           ref={editorRef}
           contentEditable
           onInput={handleInput}
-          onKeyDown={handleKeyDown}
           onKeyUp={updateActiveFormats}
           onMouseUp={updateActiveFormats}
           onPaste={handlePaste}

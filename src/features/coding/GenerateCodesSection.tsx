@@ -10,14 +10,17 @@ import { AlertTriangle, FileText, Info, Save, Trash2, Zap } from 'lucide-react';
 // ==============================
 // Props Interface
 // ==============================
+
+interface Metadata {
+  visitDate?: string;
+  visitTime?: string;
+  visitType?: string;
+  specialty?: string;
+}
+
 interface GenerateCodesSectionProps {
   content: string;
-  metadata: {
-    patientId?: string;
-    visitType?: string;
-    providerName?: string;
-    [key: string]: unknown;
-  };
+  metadata: Metadata;
   onGenerate: () => void;
   isGenerating: boolean;
   canGenerate: boolean;
@@ -297,17 +300,21 @@ const GenerateCodesSection: React.FC<GenerateCodesSectionProps> = ({
       errors.push('SOAP note should contain at least 50 words for accurate coding');
     }
 
-    if (!metadata?.patientId) {
-      errors.push('Patient ID is required');
-    }
+    // if (!metadata?.patientId) {
+    //   errors.push('Patient ID is required');
+    // }
 
     if (!metadata?.visitType) {
       errors.push('Visit type must be selected');
     }
 
-    if (!metadata?.providerName) {
-      errors.push('Provider name is required');
+    if (!metadata?.specialty) {
+      errors.push('Specialty must be selected');
     }
+
+    // if (!metadata?.providerName) {
+    //   errors.push('Provider name is required');
+    // }
 
     const lowerContent = content.toLowerCase();
     if (
