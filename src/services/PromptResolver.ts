@@ -54,8 +54,8 @@ export class PromptResolver {
           type: 'conflicting_history',
           content: m.match.content.substring(0, 200) + '...',
           metadata: {
-            visitType: m.match.noteMetadata.visitType,
-            specialty: m.match.noteMetadata.specialty,
+            visitType: m.match.metadata.visitType,
+            specialty: m.match.metadata.specialty,
           },
           score: m.boostScore,
         }));
@@ -108,8 +108,8 @@ export class PromptResolver {
           type: 'strong_match',
           content: m.content,
           metadata: {
-            visitType: m.noteMetadata.visitType,
-            specialty: m.noteMetadata.specialty,
+            visitType: m.metadata.visitType,
+            specialty: m.metadata.specialty,
           },
           score: topMatch.boostScore,
         },

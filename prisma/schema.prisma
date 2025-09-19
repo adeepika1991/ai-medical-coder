@@ -46,6 +46,7 @@ model SoapNoteRevision {
   content     String
   embedding   Unsupported("vector")
   createdAt   DateTime              @default(now())
+  contentHash String?               @unique
   metadata    Json?
   decisionSet CodeDecisionSet?      @relation("RevisionToDecisionSet")
   soapNote    SoapNote              @relation(fields: [soapNoteId], references: [id])

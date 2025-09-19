@@ -1,6 +1,7 @@
 import { z } from 'zod';
+import { DEFAULT_DOCTOR } from './doctorConfig';
 
-const SpecialtyEnum = z.enum([
+export const SpecialtyEnum = z.enum([
   'CARDIOLOGY',
   'DERMATOLOGY',
   'ORTHOPEDICS',
@@ -11,7 +12,7 @@ const SpecialtyEnum = z.enum([
   'OTHER',
 ]);
 
-const VisitTypeEnum = z.enum([
+export const VisitTypeEnum = z.enum([
   'OFFICE_VISIT',
   'CONSULTATION',
   'FOLLOW_UP',
@@ -24,12 +25,12 @@ const VisitTypeEnum = z.enum([
 ]);
 
 export const GenerateSchema = z.object({
-  soapNote: z.string().min(30, 'SOAP note too short'),
-  submittedBy: z.string().email(),
-  patientId: z.string().uuid().optional(),
-  specialty: SpecialtyEnum.default('OTHER'),
-  visitType: VisitTypeEnum.default('OTHER'),
-  visitDate: z.string().datetime().optional(),
+  soapNote: z.string().min(15, 'Note too short'),
+  patientId: z.string().uuid(),
+  specialty: SpecialtyEnum,
+  visitType: VisitTypeEnum,
+  visitDate: z.string().optional(),
+  submittedBy: z.string().default(DEFAULT_DOCTOR.id),
 });
 
 export const FinalizeCodesSchema = z.object({

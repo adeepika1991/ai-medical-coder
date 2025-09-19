@@ -29,7 +29,7 @@ export type SOAPMatch = {
   finalizedCodes: { code: string; codeType: string }[];
   rejectedCodes: { code: string; codeType: string; reason: string }[];
   manualCodes: { code: string; codeType: string }[];
-  noteMetadata: {
+  metadata: {
     patientId: string;
     doctorId: string;
     doctorName: string;
@@ -103,4 +103,17 @@ export type LLMOutput = {
   suggestions: LLMCodeSuggestion[];
 };
 
-// type R = Prisma.SoapNoteRevisionGetPayload<{ select: { metadata: true } }>;
+export type RawMatch = {
+  revisionId: string;
+  content: string;
+  similarityScore: string | number;
+  finalizedCodes: { code: string; codeType: string }[];
+  rejectedCodes: { code: string; codeType: string; reason: string }[];
+  manualCodes: { code: string; codeType: string }[];
+  patientId: string;
+  doctorId: string;
+  doctorName: string;
+  specialty: string;
+  visitType: string;
+  createdAt: string;
+};
