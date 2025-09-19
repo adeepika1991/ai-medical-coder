@@ -21,20 +21,20 @@ export class BoostScorer {
 
         // Recency boost
         const ageInDays =
-          (now.getTime() - match.noteMetadata.createdAt.getTime()) / (1000 * 60 * 60 * 24);
+          (now.getTime() - match.metadata.createdAt.getTime()) / (1000 * 60 * 60 * 24);
         if (ageInDays < this.config.recentDays) {
           boostScore += this.config.recentBoost;
           scenarioTags.push('recent');
         }
 
         // Same provider boost
-        if (match.noteMetadata.doctorId === currentDoctorId) {
+        if (match.metadata.doctorId === currentDoctorId) {
           boostScore += this.config.sameProviderBoost;
           scenarioTags.push('same_provider');
         }
 
         // Visit type match
-        if (match.noteMetadata.visitType === this.getVisitType(match)) {
+        if (match.metadata.visitType === this.getVisitType(match)) {
           boostScore += this.config.visitTypeMatchBoost;
           scenarioTags.push('same_visit_type');
         }
@@ -73,6 +73,6 @@ export class BoostScorer {
   }
 
   private getVisitType(match: SOAPMatch): string {
-    return match.noteMetadata.visitType || 'OTHER';
+    return match.metadata.visitType || 'OTHER';
   }
 }
